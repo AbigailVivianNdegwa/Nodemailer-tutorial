@@ -1,5 +1,3 @@
-# NodeMailer Tutorial 
-
 **Imagine this...**
 You have built a beautiful website or portfolio using NextJs,
 Your contact form looks perfect,
@@ -81,13 +79,14 @@ app/api/contact/route.js
 
 ```
 import nodemailer from "nodemailer";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
     const { name, email, message } = await request.json();
 
-    if (!name || !email || !message) {
-      return Response.json(
+   if (!name || !email || !message) {
+      return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 }
       );
@@ -124,7 +123,6 @@ export async function POST(request) {
     );
   }
 }
-
 ```
 The above code does the following:
 
@@ -193,4 +191,169 @@ Google will give you a 16 letter password which you will use in the `.env.local`
 
 ## Connect the Front-end Contact Form
 
+So far, our backend knows how to send emails and we our front-end collects the user information through the Contact Me Form. 
 
+`contact.jsx`
+
+```
+"use client";
+
+import { FaPaperPlane } from "react-icons/fa";
+import { FaPhone } from "react-icons/fa6";
+
+export default function Contact (){
+
+    const handleSubmit = async (event) => {
+        event.preventDefault ();
+        const formData = new FormData (event.target);
+        const data = Object.fromEntries(formData);
+
+        try{
+            const response = await fetch('/api/contact', {
+                 method: 'POST',
+                headers: { 'Content-Type': 'application/json'},
+                body: JSON.stringify(data),
+            });
+            if (response.ok){
+                alert('Email sent successfully!');
+            } else{
+                alert('Failed to send email.');
+            }
+        } catch (error){
+            console.error('Error:', error);
+        }
+    };
+    
+
+    return(
+        <section
+            className="pt-20 pb-10"
+            id="contact"
+        >
+            <div className="max-w-7xl mx-auto px-5 md:px-20">
+               <h2 className="text-4xl md:text-5xl font-bold text-center text-[var(--text-color)]">
+                    CONTACT ME
+                </h2>
+                <div className="pt-20 flex flex-col md:flex-row gap-8">
+                    <div className="flex-1">
+                        <div className="space-y-6">
+                            <p className=" flex gap-5 text-lg md:text-xl font-bold text-[var(--text-color)]">
+                               <FaPaperPlane />
+                                test@gmail.com
+                            </p>
+                            <p className="flex gap-5 text-lg md:text-xl font-bold text-[var(--text-color)]">
+                                <FaPhone />
+                                0712345678
+                            </p>
+                        </div>
+                        <div className=" pt-10 flex-1">
+                            <form onSubmit={handleSubmit}
+                                className="space-y-4 mb-8"
+                                id="contact-form"
+                            >
+                                <input
+                                    type="text"
+                                    name="name"
+                                    placeholder="Enter your name"
+                                    required
+                                    className="w-full border-0 outline-none bg-[var(--snd-bg-color)] px-4 py-4 text-[var(--text-color)] text-lg rounded-[6px]"
+                                /> 
+                                <input
+                                    type="email"
+                                    name="email"
+                                    placeholder="Enter your email"
+                                    required
+                                    className="w-full border-0 outline-none bg-[var(--snd-bg-color)] px-4 py-4 text-[var(--text-color)] text-lg rounded-[6px]"
+                                />
+                                <textarea
+                                    name="message"
+                                    rows="6"
+                                    placeholder="Add your message"
+                                    className="w-full border-0 outline-none bg-[var(--snd-bg-color)] px-4 py-4 text-[var(--text-color)] text-lg rounded-[6px] resize-none"
+                                ></textarea>
+                                <button
+                                    type="submit"
+                                    className="inline-block px-7 py-4 bg-[var(--main-color)] rounded-full shadow-lg font-semibold text-base md:text-xl text-[var(--bg-color)] tracking-wide hover:shadow-none transition"
+                                >
+                                    SUBMIT
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+};
+```
+In order to connect the two, we use the handleSubmit function. 
+
+`handleSubmit` function:
+
+```
+const handleSubmit = async (event) => {
+        event.preventDefault ();
+        const formData = new FormData (event.target);
+        const data = Object.fromEntries(formData);
+
+        try{
+            const response = await fetch('/api/contact', {
+                 method: 'POST',
+                headers: { 'Content-Type': 'application/json'},
+                body: JSON.stringify(data),
+            });
+            if (response.ok){
+                alert('Email sent successfully!');
+            } else{
+                alert('Failed to send email.');
+            }
+        } catch (error){
+            console.error('Error:', error);
+        }
+    };
+```
+The above code segment performs the following tasks:
+
+- By default, forms reload the page when submitted. We use the `event.preventDefault ();` to prevent this so that the submission can be handled by `JavaScript` instead. 
+
+- The `const formData = new FormData (event.target);` `const data = Object.fromEntries(formData);` takes all the input from the form in this case (Name, Email and Message) and converts them to JavaScript objects. This gives the data structure so that it can be sent to the backend. 
+
+- A request is then sent to `api/contact` which matches the `route.js` we had created earlier on. 
+
+- We use the **POST** Method mainly because we are sending the data to the server and POST is used to submit data securely.
+
+- We use `  body: JSON.stringify(data),` to stringify JSON because when sending data through `fetch` the body must be a string. This helps the server to understand the data. 
+
+## Success and Error handling
+ Success and Error handling is important mainly because it is the way our backend will communicate to the user. The user will be able to know if their email was sent or not based on the notification after submitting the form details. 
+
+`code segment`
+
+```
+ if (response.ok){
+                alert('Email sent successfully!');
+            } else{
+                alert('Failed to send email.');
+            }
+        } catch (error){
+            console.error('Error:', error);
+        }
+```
+ If the backend successfully sends the email, the user gets a confirmation message saying `Email sent successfully` and if something fails they are notified by a notification saying `Failed to send email.`
+
+The following images show the different outcomes:
+
+- In the instance the email is not sent, you will receive the following error message:
+
+
+![Error Message](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/02dxsm07yyc6zn4mdq0v.JPG) 
+
+- In the instance the email is sent, you will receive the following success message:
+
+![Success Message](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/uzk9katy2vu2zttnmk3f.JPG)
+
+
+By the end of this blog, you will be able to connect Nodemailer to your Next.js project. 
+**See you on the blog!**
+
+**~CodesbyAbby**
